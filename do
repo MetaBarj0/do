@@ -1253,12 +1253,6 @@ exit $?
 # causes the user to enter in an interactive menu allowing the configuration of
 # the development environment. Try it yourself to know more about that.
 #
-# ./do edit +-------------------------------------------------------------------
-# __________|This command allow editing of your project through vim editor. You
-# need vim V7.4 or greater in order to use this feature. This command allow you
-# to keep track of your editing session in order to restore it the next time
-# you invoke 'do' with the edit command.
-#
 # ./do compile                       +-------------------------------------------
 # ./do compile --files=f1.cpp,f2.cpp |This command launch a compilation process
 # ___________________________________|on all source files of your project if the
