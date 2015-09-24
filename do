@@ -437,47 +437,6 @@ function run_configure() {
   output_verbose 3 'Exiting '$FUNCNAME' function...'
 }
 
-# function used when the 'edit' command is passed as first argument. It intends
-# to lauch the vim editor with a startup configuration and a potentially set
-# session data
-function run_edit() {
-  output_verbose 3 'Entering '$FUNCNAME' function...'
-  output_verbose 3 'arguments : '$@
-
-  # first, get the vim startup configuration
-  local vim_configuration=$(\
-    read_data_block 'vim startup configuration'
-    )
-
-  # and get the vim session data
-  local vim_session=$(\
-    read_data_block 'vim session data'
-    )
-
-  # the file in which vim will read and write its session data
-  vim_session_file_name=$script_path/'.vim_session'
-
-  # then, create a file with all stuff
-  echo "$vim_configuration" > $vim_session_file_name
-  echo "$vim_session" >> $vim_session_file_name
-
-  # launch vim in a subshell in background. The subshell exits when vim exits
-  # and, following commands are executed
-  ( exec $vim_command -S $vim_session_file_name )
-
-  # quicly erase the vim data file
-  rm -f $vim_configuration_file_name
-
-  # update the vim session data block
-  vim_session_data="$(cat $vim_session_file_name)"
-  update_data_block 'vim session data' "$vim_session_data"
-
-  # quickly erase vim session data file
-  rm -f $vim_session_file_name
-
-  output_verbose 3 'Exiting '$FUNCNAME' function...'
-}
-
 # utility function shifting an array that is global
 # $1 the name of the array
 # $@ elements of the array
@@ -1221,7 +1180,7 @@ verbose_level=1
 
 # these are valid command that can be passed to the script as first argument
 valid_commands=(\
-  'help' 'configure' 'edit' 'compile' 'build' 'run' 'clean' 'pack')
+  'help' 'configure' 'compile' 'build' 'run' 'clean' 'pack')
 
 # here are all the global options
 verbose_level_options=('--verbose_level=[0-3]')
@@ -1463,75 +1422,104 @@ exit $?
 #}
 #run "$@"
 #>>>
-#<<<vim startup configuration
-#let launch_script_directory='/Users/MetaBarj0/Documents/development/foundry/bash/do'
-#set nocompatible
-#syntax on
-#set encoding=utf8
-#set noerrorbells
-#set novisualbell
-#set ls=2
-#set statusline=%f%m%r\ %l/%L:%v
-#set shell=/bin/bash\ -l
-#set bkc=no
-#set tw=80
-#set formatoptions+=t
-#set wrap
-#set hlsearch
-#set incsearch
-#set expandtab
-#set shiftwidth=2
-#set tabstop=2
-#set smarttab
-#set cindent
-#set backspace=2
-#set foldmethod=marker
+#<<<custom external configuration
 #
-#:autocmd BufEnter,WinEnter *.hpp set conceallevel=3 | syn match foldMarkers '.*{{{.*' conceal | syn match foldMarkers '.*}}}.*' conceal
-#:autocmd BufEnter,WinEnter *.cpp set conceallevel=3 | syn match foldMarkers '.*{{{.*' conceal | syn match foldMarkers '.*}}}.*' conceal
-#:autocmd BufEnter,WinEnter *.tcc set conceallevel=3 | syn match foldMarkers '.*{{{.*' conceal | syn match foldMarkers '.*}}}.*' conceal
+## This is the stat command used to get how old a file is since Epoch
+#stat_command='stat -f %Sm -t %s'
 #
-#set foldcolumn=0
-#set noswapfile
-#set nobackup
-#set nocursorline
-#set nocursorcolumn
-#set ssop=blank,buffers,folds,help,options,tabpages,winsize,unix,slash,sesdir
-#au CursorHold * checktime
-#au CursorHoldI * checktime
-#" set comment strings. Depend on context
-#autocmd bufEnter,WinEnter [mM]akefile set commentstring=#%s#
-#autocmd bufEnter,WinEnter *.cpp set commentstring=/*%s*/
-#autocmd bufEnter,WinEnter *.hpp set commentstring=/*%s*/
-#autocmd bufEnter,WinEnter *.tcc set commentstring=/*%s*/
-#autocmd bufEnter,WinEnter *.vim set commentstring=\"%s\"
+## This is the external tools section configuration. This section set the
+## configuration to indicate how to invoke and use external tools.
 #
-#" current file name
-#let s:file_name=expand('<afile>:t')
+## This is the command used to invoke the vim editor
+#vim_command='mvim -v'
 #
-#" CTRL-v CTRL-c CTRL-e : Visual Comment Enable
-#vmap <C-v><C-c><C-e> :s/^/\/\/\ / <CR> :let @/="" <CR>
+## This is the documentation directory path in which you can put some
+## documentation stuff. Moreover, the documenter program will put all
+## documentation files in this directory
+#documentation_directory=./doc
 #
-#" CTRL-v CTRL-c CTRL-d : Visual Comment Disable
-#vmap <C-v><C-c><C-d> :s/^\/\/\ // <CR> :let @/="" <CR>
+## This is the command used to invoke the documenter of the project
+#documenter=doxygen
 #
-#" some snippets
-#:iabbrev guard<c-s> 
-#\#ifndef __HPP_<CR>
-#\#define __HPP_<CR><CR><CR><CR>
-#\#endif // __HPP_<ESC>5<UP>$4<LEFT>i
-#
-#:iabbrev brief<c-s> 
-#\/**<CR>
-#\  \brief<ESC><<o
-#\ **/<ESC><<<UP>$a
-#
-#" autocommand responsible of saving vim session
-#au VimLeave * exec 'mks! ' . launch_script_directory . '/.vim_session'
+## This is the command used to invoke the debugger.
+#debugger='gdb -q'
 #>>>
 #<<<custom dev configuration
+## This is the script consfiguration for development tools. These variables are
+## used to configure the behavior of tools that are responsible of the
+## project binary generation
+#
+## Indicates the sources directories that are scanned to compile or build the
+## current project. If more than 1 directory is specified, you have to separate
+## them with a space.
+#source_directories=./src
+#
+## This is the root directory used for output files. If this directory name
+## contains space, you have to surround it with quotes
+#output_directory=.
+#
+## This is the name of the directory that will receive object files after their
+## generation. the variable $output_directory will be used to construct the full
+## object file directory path
+#obj_dir_name=obj
+#
+## This is the name of the directory that will receive binary files after their
+## linkage. the variable $output_directory will be used to construct the full
+## binary file directory path
+#bin_dir_name=bin
+#
+## This is the default build mode that is used if not any mode is explicitly
+## specified while a generation is lauched. Correct values are 'debug' and
+## 'release'. If an incorrect value is specified, 'debug' will be taken as
+## default
+#default_build_mode=debug
+#
+## This is the number of build jobs that are launched in parallel. The more, the
+## quicker but take care not to have a job count greater than your current
+## physical thread of your CPU
+#job_count=1
+#
+## This is the name of the output binary after the build and the linkage are
+## successfull
+#program_name=program
+#
+## This is the text used to decorate the invocation of the binary. For example,
+## you could use time to measure time taken by the program to execute
+#run_command_left_args=
+#
+## This is the text used to decorate the invocation of the binary. For example,
+## you could use a pipe to filter its output with grep
+#run_command_right_args=
+#
+## This is a part of the  command to invoke the C++ compiler.
+#cxx=g++-5.1.0
+#
+## These are flags that are used to create a valid make rule to build a specific
+## compilation unit
+#cxx_dep_flags='-std=c++14 -MM'
+#
+## These are generic flag that are used in the building process to make object
+## files independently of the mode used
+#generic_cxx_flags='-Wall -Wextra -Wpedantic -ansi -std=c++14 -Winline'
+#
+## This is the specific debug mode building flag
+#debug_cxx_flags='-ggdb3'
+#
+## This is the specific release mode building flag
+#release_cxx_flags='-O3'
+#
+## These are generic flag that are used in the linkage process to make the
+## binary file independently of the mode used
+#generic_ld_flags=
+#
+## These are specific flags that are used in the linkage process to make the
+## binary file in debug mode
+#debug_ld_flags=
+#
+## These are specific flags that are used in the linkage process to make the
+## binary file in debug mode
+#release_ld_flags=
 #>>>
-#<<<custom external configuration
-#>>>
-#<<<vim session data
+#<<<vim startup configuration
+#let launch_script_directory='/Users/MetaBarj0/Documents/development/foundry/bash/do'
 #>>>
