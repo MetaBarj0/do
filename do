@@ -95,7 +95,7 @@ EOI
 
   output_verbose 3 'delete command to run : '$delete_command
   eval $delete_command
-  
+
   # adding data
   cat <<< "$data" >> $script_file_name
 
@@ -290,7 +290,6 @@ function run_configure_reset() {
   # reinitialize custome data block with empty value
   update_data_block 'custom dev configuration'
   update_data_block 'custom external configuration'
-  update_data_block 'vim session data'
 
   output_verbose 3 'Exiting '$FUNCNAME' function...'
 }
@@ -372,7 +371,7 @@ function run_configure_interactive() {
 
       # modify the variable value at runtime
       eval $variable_name'='"$variable_value"
-      
+
       echo '-->OK the new definition is '$variable_name="$variable_value"
 
       # before updating the value, I need to escape few chars for the
@@ -715,7 +714,7 @@ function run_link() {
     ${output_directory}/${obj_dir_name}/${default_build_mode})
 
   local obj_files=()
-  
+
   obj_files+=$(\
     append_files_from_in $input_obj_directory '.o' ${obj_files[@]})
 
@@ -823,30 +822,6 @@ function run_clean() {
   output_verbose 3 'Exiting '$FUNCNAME' function...'
 }
 
-# this function finish the vim configuration process by adding a vim command
-# consisting to initialize a vim variable with the full path of this script
-# @$1 the vim configuration data block
-function finish_vim_configuration() {
-  output_verbose 3 'Entering '$FUNCNAME' function...'
-  output_verbose 3 'arguments : '$@
-
-  # get the vim startup configuration in argument
-  local vim_configuration="$1"
-
-  # remove the default assignation variable, replacing it with the full path of
-  # this script
-  vim_configuration=$(\
-cat << EOI
-let launch_script_directory='$script_path'
-$(sed '1,1d' <<< "$vim_configuration")
-EOI)
-
-  # update the custom vim startup configuration data block
-  update_data_block 'vim startup configuration' "$vim_configuration"
-
-  output_verbose 3 'Exiting '$FUNCNAME' function...'
-}
-
 # internal function used to check and apply the content of a custom
 # configuration data block. If no content exists, take one from a related
 # default configuration data block to initialize the custom configuration data
@@ -901,16 +876,6 @@ function pre_init_with_default() {
   # check and apply external configuration
   apply_custom_data_block 'custom dev configuration'\
 	  		  'dev configuration'
-
-  output_verbose 3 'setting up startup vim configuration...'
-
-  # extract the vim startup configuration
-  local vim_startup_configuration=$(\
-      read_data_block 'vim startup configuration'\
-    )
-
-  # now, change the vim variable assignation about the path of this script
-  finish_vim_configuration "$vim_startup_configuration"
 
   output_verbose 3 'Exiting '$FUNCNAME' function...'
 }
@@ -1348,15 +1313,15 @@ exit $?
 #run_command_right_args=
 #
 ## This is a part of the  command to invoke the C++ compiler.
-#cxx=g++-5.1.0
+#cxx=g++
 #
 ## These are flags that are used to create a valid make rule to build a specific
 ## compilation unit
-#cxx_dep_flags='-std=c++14 -MM'
+#cxx_dep_flags='-std=c++11 -MM'
 #
 ## These are generic flag that are used in the building process to make object
 ## files independently of the mode used
-#generic_cxx_flags='-Wall -Wextra -Wpedantic -ansi -std=c++14 -Winline'
+#generic_cxx_flags='-Wall -Wextra -Wpedantic -ansi -std=c++11 -Winline'
 #
 ## This is the specific debug mode building flag
 #debug_cxx_flags='-ggdb3'
@@ -1384,17 +1349,6 @@ exit $?
 ## This is the external tools section configuration. This section set the
 ## configuration to indicate how to invoke and use external tools.
 #
-## This is the command used to invoke the vim editor
-#vim_command='mvim -v'
-#
-## This is the documentation directory path in which you can put some
-## documentation stuff. Moreover, the documenter program will put all
-## documentation files in this directory
-#documentation_directory=./doc
-#
-## This is the command used to invoke the documenter of the project
-#documenter=doxygen
-#
 ## This is the command used to invoke the debugger.
 #debugger='gdb -q'
 #>>>
@@ -1416,104 +1370,7 @@ exit $?
 #}
 #run "$@"
 #>>>
-#<<<custom external configuration
-#
-## This is the stat command used to get how old a file is since Epoch
-#stat_command='stat -f %Sm -t %s'
-#
-## This is the external tools section configuration. This section set the
-## configuration to indicate how to invoke and use external tools.
-#
-## This is the command used to invoke the vim editor
-#vim_command='mvim -v'
-#
-## This is the documentation directory path in which you can put some
-## documentation stuff. Moreover, the documenter program will put all
-## documentation files in this directory
-#documentation_directory=./doc
-#
-## This is the command used to invoke the documenter of the project
-#documenter=doxygen
-#
-## This is the command used to invoke the debugger.
-#debugger='gdb -q'
-#>>>
 #<<<custom dev configuration
-## This is the script consfiguration for development tools. These variables are
-## used to configure the behavior of tools that are responsible of the
-## project binary generation
-#
-## Indicates the sources directories that are scanned to compile or build the
-## current project. If more than 1 directory is specified, you have to separate
-## them with a space.
-#source_directories=./src
-#
-## This is the root directory used for output files. If this directory name
-## contains space, you have to surround it with quotes
-#output_directory=.
-#
-## This is the name of the directory that will receive object files after their
-## generation. the variable $output_directory will be used to construct the full
-## object file directory path
-#obj_dir_name=obj
-#
-## This is the name of the directory that will receive binary files after their
-## linkage. the variable $output_directory will be used to construct the full
-## binary file directory path
-#bin_dir_name=bin
-#
-## This is the default build mode that is used if not any mode is explicitly
-## specified while a generation is lauched. Correct values are 'debug' and
-## 'release'. If an incorrect value is specified, 'debug' will be taken as
-## default
-#default_build_mode=debug
-#
-## This is the number of build jobs that are launched in parallel. The more, the
-## quicker but take care not to have a job count greater than your current
-## physical thread of your CPU
-#job_count=1
-#
-## This is the name of the output binary after the build and the linkage are
-## successfull
-#program_name=program
-#
-## This is the text used to decorate the invocation of the binary. For example,
-## you could use time to measure time taken by the program to execute
-#run_command_left_args=
-#
-## This is the text used to decorate the invocation of the binary. For example,
-## you could use a pipe to filter its output with grep
-#run_command_right_args=
-#
-## This is a part of the  command to invoke the C++ compiler.
-#cxx=g++-5.1.0
-#
-## These are flags that are used to create a valid make rule to build a specific
-## compilation unit
-#cxx_dep_flags='-std=c++14 -MM'
-#
-## These are generic flag that are used in the building process to make object
-## files independently of the mode used
-#generic_cxx_flags='-Wall -Wextra -Wpedantic -ansi -std=c++14 -Winline'
-#
-## This is the specific debug mode building flag
-#debug_cxx_flags='-ggdb3'
-#
-## This is the specific release mode building flag
-#release_cxx_flags='-O3'
-#
-## These are generic flag that are used in the linkage process to make the
-## binary file independently of the mode used
-#generic_ld_flags=
-#
-## These are specific flags that are used in the linkage process to make the
-## binary file in debug mode
-#debug_ld_flags=
-#
-## These are specific flags that are used in the linkage process to make the
-## binary file in debug mode
-#release_ld_flags=
 #>>>
-#<<<vim startup configuration
-#let launch_script_directory='/Users/MetaBarj0/Documents/development/foundry/bash/do'
+#<<<custom external configuration
 #>>>
