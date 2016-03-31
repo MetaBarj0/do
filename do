@@ -778,9 +778,13 @@ function clean_only_obj() {
   output_verbose 1 'Cleaning object files...'
 
   local output_obj_directory=$(\
-    sed 's/\/+/\//g' <<< ${output_directory}/${obj_dir_name})
+    sed 's/\/+/\//g' <<<\
+    ${output_directory}/${obj_dir_name}/${default_build_mode})
 
   rm -rf $output_obj_directory
+
+  # remove directory if empty
+  find ${output_directory} -depth -type d -empty -name ${obj_dir_name} -delete
 
   output_verbose 3 'Exiting '$FUNCNAME' function...'
 }
@@ -793,9 +797,13 @@ function clean_only_bin() {
   output_verbose 1 'Cleaning binary files...'
 
   local output_bin_directory=$(\
-    sed 's/\/+/\//g' <<< ${output_directory}/${bin_dir_name})
+    sed 's/\/+/\//g' <<<\
+    ${output_directory}/${bin_dir_name}/${default_build_mode})
 
   rm -rf $output_bin_directory
+
+  # remove directory if empty
+  find ${output_directory} -depth -type d -empty -name ${bin_dir_name} -delete
 
   output_verbose 3 'Exiting '$FUNCNAME' function...'
 }
@@ -808,10 +816,26 @@ function run_clean() {
   # iterate through all options, the first found take the precedence
   for opt in $options; do
     if arg_matches_one_of $opt ${clean_options[@]}; then
-      clean_$(extract_option_name $opt)
+      # check mode specified for clean
+      if [[ $(extract_option_name $opt) == 'mode' ]]; then
+        # redefine the target of the build
+        default_build_mode=$(extract_option_value $opt)
+      fi
 
-      output_verbose 3 'Exiting '$FUNCNAME' function...'
-      return 0
+      # check for which files have to be removed
+      if [[ $(extract_option_name $opt) == 'only_obj' ]]; then
+        clean_only_obj
+
+        output_verbose 3 'Exiting '$FUNCNAME' function...'
+        return 0
+      fi
+
+      if [[ $(extract_option_name $opt) == 'only_bin' ]]; then
+        clean_only_bin
+
+        output_verbose 3 'Exiting '$FUNCNAME' function...'
+        return 0
+      fi
     fi
   done
 
@@ -1166,7 +1190,10 @@ generic_build_compile_options=('--files=.*\.cpp')
 specific_build_options=('--mode=(debug|release)' '--without_link' '--overwrite')
 
 # clean options
-clean_options=('--only_obj' '--only_bin')
+clean_options=(\
+  '--only_obj' '--only_bin'\
+  '--mode=(debug|release)'\
+)
 
 # run options
 run_options=('--with_debugger')
@@ -1370,7 +1397,90 @@ exit $?
 #}
 #run "$@"
 #>>>
-#<<<custom dev configuration
-#>>>
 #<<<custom external configuration
+#
+## This is the stat command used to get how old a file is since Epoch
+#stat_command='stat -f %Sm -t %s'
+#
+## This is the external tools section configuration. This section set the
+## configuration to indicate how to invoke and use external tools.
+#
+## This is the command used to invoke the debugger.
+#debugger='gdb -q'
+#>>>
+#<<<custom dev configuration
+## This is the script consfiguration for development tools. These variables are
+## used to configure the behavior of tools that are responsible of the
+## project binary generation
+#
+## Indicates the sources directories that are scanned to compile or build the
+## current project. If more than 1 directory is specified, you have to separate
+## them with a space.
+#source_directories=./src
+#
+## This is the root directory used for output files. If this directory name
+## contains space, you have to surround it with quotes
+#output_directory=.
+#
+## This is the name of the directory that will receive object files after their
+## generation. the variable $output_directory will be used to construct the full
+## object file directory path
+#obj_dir_name=obj
+#
+## This is the name of the directory that will receive binary files after their
+## linkage. the variable $output_directory will be used to construct the full
+## binary file directory path
+#bin_dir_name=bin
+#
+## This is the default build mode that is used if not any mode is explicitly
+## specified while a generation is lauched. Correct values are 'debug' and
+## 'release'. If an incorrect value is specified, 'debug' will be taken as
+## default
+#default_build_mode=debug
+#
+## This is the number of build jobs that are launched in parallel. The more, the
+## quicker but take care not to have a job count greater than your current
+## physical thread of your CPU
+#job_count=1
+#
+## This is the name of the output binary after the build and the linkage are
+## successfull
+#program_name=program
+#
+## This is the text used to decorate the invocation of the binary. For example,
+## you could use time to measure time taken by the program to execute
+#run_command_left_args=
+#
+## This is the text used to decorate the invocation of the binary. For example,
+## you could use a pipe to filter its output with grep
+#run_command_right_args=
+#
+## This is a part of the  command to invoke the C++ compiler.
+#cxx=g++
+#
+## These are flags that are used to create a valid make rule to build a specific
+## compilation unit
+#cxx_dep_flags='-std=c++11 -MM'
+#
+## These are generic flag that are used in the building process to make object
+## files independently of the mode used
+#generic_cxx_flags='-Wall -Wextra -Wpedantic -ansi -std=c++11 -Winline'
+#
+## This is the specific debug mode building flag
+#debug_cxx_flags='-ggdb3'
+#
+## This is the specific release mode building flag
+#release_cxx_flags='-O3'
+#
+## These are generic flag that are used in the linkage process to make the
+## binary file independently of the mode used
+#generic_ld_flags=
+#
+## These are specific flags that are used in the linkage process to make the
+## binary file in debug mode
+#debug_ld_flags=
+#
+## These are specific flags that are used in the linkage process to make the
+## binary file in debug mode
+#release_ld_flags=
 #>>>
