@@ -462,7 +462,7 @@ function compile_file() {
   output_verbose 2 'Compiling '$file'...'
 
   # create the compilation command
-  local compile_command=$cxx' '$generic_cxx_flags' -S '$file' -o /dev/null'
+  local compile_command=$cxx' '${generic_cxx_flags[@]}' -S '$file' -o /dev/null'
 
   output_verbose 3 $compile_command
 
@@ -577,12 +577,12 @@ function build_file() {
   mkdir -p $(dirname $obj_file)
 
   # determines complete flags depending of mode (debug or release)
-  local cxx_flags=$generic_cxx_flags
+  local cxx_flags=${generic_cxx_flags[@]}
 
   if [[ $default_build_mode == 'debug' ]]; then
-    cxx_flags+=' '$debug_cxx_flags
+    cxx_flags+=' '${debug_cxx_flags[@]}
   else
-    cxx_flags+=' '$release_cxx_flags
+    cxx_flags+=' '${release_cxx_flags[@]}
   fi
 
   # create the compilation command
@@ -600,7 +600,7 @@ function build_file() {
     result=$?
   else
     # get all dependencies associated to the source file
-    local dep_command=$cxx' '$cxx_dep_flags' '$src_file
+    local dep_command=$cxx' '${cxx_dep_flags[@]}' '$src_file
     local src_files=$(\
       sed 's/^.*:\ *//;s/\\//g' <<< $($dep_command))
 
@@ -610,7 +610,7 @@ function build_file() {
 
     # get how old is the object file
     if [ -f $obj_file ]; then
-      stat_obj_file=$($stat_command $obj_file)
+      stat_obj_file=$(${stat_command[@]} $obj_file)
     fi
 
     # default build message
@@ -618,7 +618,7 @@ function build_file() {
 
     for f in $src_files; do
       # if the object file is older than on of the dependancy, build it
-      stat_src_file=$($stat_command $f)
+      stat_src_file=$(${stat_command[@]} $f)
 
       if [[ $stat_obj_file < $stat_src_file ]]; then
         build_msg='Building '$src_file'...'
@@ -719,14 +719,14 @@ function run_link() {
     append_files_from_in $input_obj_directory '.o' ${obj_files[@]})
 
   # determines complete flags depending of mode (debug or release)
-  local cxx_flags=$generic_cxx_flags
-  local ld_flags=$generic_ld_flags
+  local cxx_flags=${generic_cxx_flags[@]}
+  local ld_flags=${generic_ld_flags[@]}
 
   if [[ $default_build_mode == 'debug' ]]; then
-    cxx_flags+=' '$debug_cxx_flags
-    ld_flags+=' '$debug_ld_flags
+    cxx_flags+=' '${debug_cxx_flags[@]}
+    ld_flags+=' '${debug_ld_flags[@]}
   else
-    cxx_flags+=' '$release_cxx_flags
+    cxx_flags+=' '${release_cxx_flags[@]}
     ld_flags+=' '$release_ld_flags
   fi
 
@@ -744,7 +744,7 @@ $cxx' -o '$bin_file' '$cxx_flags' '$ld_flags' '${obj_files[@]}
 
   # store the age of the youngest object file
   for file in ${obj_files[@]}; do
-    obj_file_stat=$($stat_command $file)
+    obj_file_stat=$(${stat_command[@]} $file)
 
     # update the age of the youngest obj file if necessary
     if [[ $obj_file_stat > $youngest_obj_file_stat ]]; then
@@ -753,7 +753,7 @@ $cxx' -o '$bin_file' '$cxx_flags' '$ld_flags' '${obj_files[@]}
   done
 
   if [ -f $bin_file ]; then
-    bin_file_stat=$($stat_command $bin_file)
+    bin_file_stat=$(${stat_command[@]} $bin_file)
   fi
 
   # default link message
@@ -1019,14 +1019,14 @@ ${default_build_mode}/${program_name}
   for opt in $options; do
     if arg_matches_one_of $opt ${run_options[@]}; then
       if [[ $(extract_option_name $opt) == 'with_debugger' ]]; then
-        invoke_command+=$debugger' '
+        invoke_command+=${debugger[@]}' '
       fi
     fi
   done
 
-  invoke_command+=$(echo ${run_command_left_args}\
+  invoke_command+=$(echo ${run_command_left_args[@]}\
                          ${bin_file_path}\
-		         ${run_command_right_args})
+		         ${run_command_right_args[@]})
 
   output_verbose 3 'Exiting '$FUNCNAME' function...'
 
